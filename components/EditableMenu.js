@@ -1,13 +1,14 @@
 import TopBar from "./TopBar";
 import { useEffect, useState } from "react";
 import axios from "axios";
-import Product from "./EditableProduct";
+import ProductList from "./ProductList";
 
 export default function Menu() {
   const [state, setState] = useState("Fruits Tea");
   const [categories, setCategories] = useState([]);
   const [products, setProducts] = useState([]);
   const [rate, setRate] = useState();
+  const [categoriesWithProducts, setCategoriesWithProducts] = useState([]);
 
   useEffect(() => {
     axios.get("/api/categories").then((res) => setCategories(res.data));
@@ -15,14 +16,47 @@ export default function Menu() {
     axios.get("/api/products").then((res) => setProducts(res.data));
   }, []);
 
+  useEffect(() => {
+    const categoriesWithProducts = categories.map((category) => {
+      const categoryProducts = products
+        .filter((product) => product.categoryID === category._id)
+        .filter((product) => product.appear)
+        .sort((a, b) => a.usdprice - b.usdprice); // Sort from lowest to highest price
+      const categoryHeight = category.description ? 144 : 104;
+
+      const screenWidth = window.innerWidth;
+      let numberOfColumns;
+      if (screenWidth < 768) {
+        numberOfColumns = 1;
+      } else if (screenWidth < 1024) {
+        numberOfColumns = 2;
+      } else {
+        numberOfColumns = 3;
+      }
+      const productsHeight =
+        categoryProducts.length * 170 + (categoryProducts.length - 1) * 16;
+
+      const height = categoryHeight + productsHeight / numberOfColumns;
+      return { ...category, products: categoryProducts, height };
+    });
+
+    categoriesWithProducts.forEach((category, index) => {
+      if (index !== 0) {
+        category.height += categoriesWithProducts[index - 1].height;
+      }
+    });
+
+    setCategoriesWithProducts(categoriesWithProducts);
+  }, [categories, products]);
+
   return (
     <>
       <TopBar categories={categories} state={state} setState={setState} />
       {/* <div onClick={() => axios.get("/api/update")}>reset</div> */}
-      <div className="rate">
-        <span> 1$ = </span>{" "}
+      <div className="mt-16 md:mt-20 flex w-full flex-nowrap gap-1 px-4 items-center mb-2">
+        <span>Dollar Rate: 1$ = </span>{" "}
         <input
-          className="input-rate"
+          className="w-28 border border-mogeColor p-1"
           placeholder={"Rate"}
           type="number"
           value={rate}
@@ -40,37 +74,37 @@ export default function Menu() {
         <span> L.L </span>
       </div>
       <div>
-        {categories?.map((category, i) => (
-          <div key={i}>
+        {categoriesWithProducts?.map((category, i) => (
+          <div key={i} id={category.name}>
             <div
-              id={category.name}
-              className="title"
+              className={`text-4xl text-white font-bold py-2 px-2 pt-14 ${
+                i === 0 && `pt-16`
+              }`}
               style={{
                 textShadow: `0px 0px 4px ${category.titleColor}`,
-                background: category.titleBackground
+                background: category.titleBackground,
               }}
             >
               {category.name}
             </div>
-            <div style={{ color: "#777", padding: ".6rem 1rem" }}>
+            <div className="text-gray-700 py-2 px-2">
               {category.description}
             </div>
-            <div
-              style={{
-                background: category.background,
-                textAlign: "center"
-              }}
-            ></div>
-            <div
-              className="productList"
-              style={{
-                background: category.background
-              }}
-            >
+            <div className="bg-gray-100 text-center">
+              {category.image && (
+                <Image
+                  src={`/img/products/${category.image}.png`}
+                  alt={category.name}
+                  width={200}
+                  height={200}
+                />
+              )}
+            </div>
+            <div className="flex flex-wrap justify-center gap-4 py-2 w-full">
               <ProductList
-                category={category}
-                products={products}
+                products={category.products}
                 rate={rate}
+                admin={true}
               />
             </div>
           </div>
@@ -111,66 +145,7 @@ export default function Menu() {
           padding:.6rem;
           padding-top:2rem;
         }
-        .input-rate{
-          border-radius:.3rem;
-          border:1px solid lightgray;
-          padding:.3rem;
-        }
       `}</style>
     </>
   );
-}
-const ProductList = ({ category, products, rate }) => {
-  return (
-    <>
-      {quicksort(products)
-        ?.filter((product) => product?.categoryID === category._id)
-        .map((product, j) => (
-          <div key={j} className="product">
-            <Product product={product} rate={rate} />
-          </div>
-        ))}
-
-      <style jsx>{`
-        .product {
-          padding: 0.8rem;
-          display: -webkit-box;
-          display: -ms-flexbox;
-          display: flex;
-          -webkit-box-pack: justify;
-          -ms-flex-pack: justify;
-          justify-content: space-between;
-          -webkit-box-align: center;
-          -ms-flex-align: center;
-          align-items: center;
-          width: 18rem;
-          -webkit-box-flex: 1;
-          -ms-flex: 1 0 18rem;
-          flex: 1 0 18rem;
-          padding: 0 1rem;
-          gap: 0.6rem;
-          border: 1px solid lightgray;
-          border-radius: 0.6rem;
-        }
-      `}</style>
-    </>
-  );
-};
-
-function quicksort(arr) {
-  if (arr.length <= 1) return arr;
-
-  const pivot = arr[arr.length - 1];
-  const left = [];
-  const right = [];
-
-  for (let i = 0; i < arr.length - 1; i++) {
-    if (arr[i].usdprice < pivot.usdprice) {
-      left.push(arr[i]);
-    } else {
-      right.push(arr[i]);
-    }
-  }
-
-  return [...quicksort(left), pivot, ...quicksort(right)];
 }

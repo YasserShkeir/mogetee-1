@@ -1,20 +1,122 @@
 import Image from "next/image";
-import TopBar from "./TopBar";
 import { useEffect, useState } from "react";
 import axios from "axios";
-import Product from "./Product";
+
+import OrderBar from "./OrderBar";
+import ProductList from "./ProductList";
+import TopBar from "./TopBar";
 
 export default function Menu() {
   const [state, setState] = useState("Fruits Tea");
   const [categories, setCategories] = useState([]);
   const [products, setProducts] = useState([]);
   const [rate, setRate] = useState(46000);
+  const [categoriesWithProducts, setCategoriesWithProducts] = useState([]);
+
+  const [selectedItems, setSelectedItems] = useState([]);
+  const [orderBarHeight, setOrderBarHeight] = useState(0);
 
   useEffect(() => {
     axios.get("/api/categories").then((res) => setCategories(res.data));
     axios.get("/api/rate").then((res) => setRate(JSON.parse(res.data)));
     axios.get("/api/products").then((res) => setProducts(res.data));
   }, []);
+
+  useEffect(() => {
+    const categoriesWithProducts = categories.map((category) => {
+      const categoryProducts = products
+        .filter((product) => product.categoryID === category._id)
+        .filter((product) => product.appear)
+        .sort((a, b) => a.usdprice - b.usdprice); // Sort from lowest to highest price
+      const categoryHeight = category.description ? 144 : 104;
+
+      const screenWidth = window.innerWidth;
+      let numberOfColumns;
+      if (screenWidth < 768) {
+        numberOfColumns = 1;
+      } else if (screenWidth < 1024) {
+        numberOfColumns = 2;
+      } else {
+        numberOfColumns = 3;
+      }
+      const productsHeight =
+        categoryProducts.length * 170 + (categoryProducts.length - 1) * 16;
+
+      const height = categoryHeight + productsHeight / numberOfColumns;
+      return { ...category, products: categoryProducts, height };
+    });
+
+    categoriesWithProducts.forEach((category, index) => {
+      if (index !== 0) {
+        category.height += categoriesWithProducts[index - 1].height;
+      }
+    });
+
+    setCategoriesWithProducts(categoriesWithProducts);
+  }, [categories, products]);
+
+  const [yLocation, setYLocation] = useState(0);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setYLocation(window.scrollY);
+    };
+    window.addEventListener("scroll", handleScroll);
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+    };
+  }, []);
+
+  useEffect(() => {
+    categoriesWithProducts.length > 0 &&
+      (() => {
+        const closestCategory = categoriesWithProducts.find(
+          (category) => yLocation <= category.height
+        );
+
+        closestCategory && setState(closestCategory.name);
+      })();
+  }, [yLocation, categoriesWithProducts]);
+
+  const phoneNumber = "+96170097533";
+
+  const addToSelectedItems = (product, quantity) => {
+    const updatedItems = selectedItems.filter(
+      (item) => item.product !== product
+    );
+    if (quantity > 0) {
+      updatedItems.push({ product, quantity });
+    }
+    setSelectedItems(updatedItems);
+  };
+
+  const clearSelectedItems = () => {
+    if (confirm("Are you sure you want to clear the order?")) {
+      setSelectedItems([]);
+    }
+  };
+
+  const sendOrder = () => {
+    let message = ``;
+    let totalUSD = 0;
+    let totalLBP = 0;
+    selectedItems.forEach((item) => {
+      const { product, quantity } = item;
+      const totalPriceUSD = quantity * product.usdprice;
+      const totalPriceLBP = Math.round((totalPriceUSD * rate) / 1000) * 1000;
+      message += `${quantity} ${product.name}\n`;
+      totalUSD += totalPriceUSD;
+      totalLBP += totalPriceLBP;
+    });
+
+    message += `\n___________________________\nTotal: $${totalUSD.toFixed(
+      2
+    )} / LBP ${totalLBP.toLocaleString()}`;
+
+    const encodedMessage = encodeURIComponent(message);
+    const whatsappURL = `https://wa.me/${phoneNumber}?text=${encodedMessage}`;
+    window.open(whatsappURL, "_blank");
+  };
 
   return (
     <>
@@ -24,166 +126,62 @@ export default function Menu() {
         setState={setState}
         main={true}
       />
-      <div>
-        {categories?.map((category, i) => (
-          <div key={i}>
+      <div
+        className={
+          selectedItems.length > 0 &&
+          (orderBarHeight < 150 ? `mb-[24vh]` : `mb-[32vh]`)
+        }
+      >
+        {categoriesWithProducts?.map((category, i) => (
+          <div key={i} id={category.name}>
             <div
-              id={category.name}
-              className="title"
+              className={`text-4xl text-white font-bold py-2 px-2 pt-14 ${
+                i === 0 && `pt-16`
+              }`}
               style={{
                 textShadow: `0px 0px 4px ${category.titleColor}`,
-                background: category.titleBackground
+                background: category.titleBackground,
               }}
             >
               {category.name}
             </div>
-            <div style={{ color: "#777", padding: ".6rem 1rem" }}>
+            <div className="text-gray-700 py-2 px-2">
               {category.description}
             </div>
-            <div
-              style={{
-                background: category.background,
-                textAlign: "center"
-              }}
-            >
+            <div className="bg-gray-100 text-center">
               {category.image && (
                 <Image
-                  height="200"
-                  width="200"
                   src={`/img/products/${category.image}.png`}
                   alt={category.name}
+                  width={200}
+                  height={200}
                 />
               )}
             </div>
-            <div
-              className="productList"
-              style={{
-                background: category.background
-              }}
-            >
+            <div className="flex flex-wrap justify-center gap-4 py-2 w-full">
               <ProductList
-                category={category}
-                products={products}
+                products={category.products}
                 rate={rate}
+                selectedItems={selectedItems}
+                addToSelectedItems={addToSelectedItems}
               />
             </div>
           </div>
         ))}
+        {selectedItems.length > 0 && (
+          <OrderBar
+            rate={rate}
+            selectedItems={selectedItems}
+            clearSelectedItems={clearSelectedItems}
+            sendOrder={sendOrder}
+            setOrderBarHeight={setOrderBarHeight}
+          />
+        )}
       </div>
+
       {/* <Link href="https://www.za-apps.com">
         <div className="watermark">Made with ❤ by za-apps.com</div>
       </Link> */}
-      <style jsx>{`
-        .productList {
-          width: 100vw;
-          display: -webkit-box;
-          display: -ms-flexbox;
-          display: flex;
-          -webkit-box-align: center;
-          -ms-flex-align: center;
-          align-items: center;
-          -webkit-box-pack: center;
-          -ms-flex-pack: center;
-          justify-content: center;
-          -webkit-box-orient: horizontal;
-          -webkit-box-direction: normal;
-          -ms-flex-direction: row;
-          flex-direction: row;
-          -webkit-flex-wrap;
-          flex-wrap: wrap;
-          gap:1rem;
-          padding:.6rem;
-        }
-        .title {
-          color:white;
-          font-size: 2.6rem;
-          padding: 0.8rem ;
-          
-        }
-        .title:target:before {
-          content: "";
-          display: block;
-          margin-top: 3rem;
-        }
-
-      `}</style>
     </>
   );
-}
-
-const ProductList = ({ category, products, rate }) => {
-  return (
-    <>
-      {quicksort(products)
-        ?.filter((product) => product?.categoryID === category._id)
-        .filter((product) => product.appear)
-        .map((product, j) => (
-          <div key={j} className="product">
-            <Product product={product} rate={rate} />
-          </div>
-        ))}
-
-      <style jsx>{`
-        .product {
-          padding: 0.6rem;
-          display: -webkit-box;
-          display: -ms-flexbox;
-          display: flex;
-          -webkit-box-pack: justify;
-          -ms-flex-pack: justify;
-          justify-content: space-between;
-          -webkit-box-align: center;
-          -ms-flex-align: center;
-          align-items: center;
-          width: 18rem;
-          -webkit-box-flex: 1;
-          -ms-flex: 1 0 18rem;
-          flex: 1 0 18rem;
-          padding: 0 1rem;
-          gap: 1rem;
-          border-radius: 0.6rem;
-          box-shadow: 0px 0px 6px #f6f6f6;
-        }
-        .addItem {
-          padding: 1rem;
-          display: -webkit-box;
-          display: -ms-flexbox;
-          display: flex;
-          flex-wrap: wrap;
-          gap: 0.3rem;
-        }
-        input {
-          font-size: 1rem;
-          border: 1px solid gray;
-          border-radius: 0.2rem;
-          padding: 0.2rem 0.6rem;
-        }
-        .goldbtn {
-          padding: 0.3rem 1rem;
-          color: white;
-          border-radius: 0.3rem;
-          background: #b39d25;
-          cursor: pointer;
-        }
-      `}</style>
-    </>
-  );
-};
-
-function quicksort(arr) {
-  if (arr.length <= 1) return arr;
-
-  const pivot = arr[arr.length - 1];
-  const left = [];
-  const right = [];
-
-  for (let i = 0; i < arr.length - 1; i++) {
-    if (arr[i].usdprice < pivot.usdprice) {
-      left.push(arr[i]);
-    } else {
-      right.push(arr[i]);
-    }
-  }
-
-  return [...quicksort(left), pivot, ...quicksort(right)];
 }

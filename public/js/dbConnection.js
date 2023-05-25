@@ -9,7 +9,7 @@ async function dbConnection() {
       useNewUrlParser: true,
       useUnifiedTopology: true,
       useFindAndModify: false,
-      useCreateIndex: true
+      useCreateIndex: true,
     },
     () => {
       console.log("connected");

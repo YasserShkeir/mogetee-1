@@ -9,97 +9,68 @@ export default function Sign({ setAuth }) {
   const [OTP, setOTP] = useState();
 
   return (
-    <>
-      <div className="signpage">
-        <div>
-          <Image height="300" width="300" src="/img/MögeTeeLogo.png" alt="" />
-        </div>
-        <div className="signContainer">
-          <div>
+    <div className="flex flex-col items-center">
+      <div>
+        <Image height={300} width={300} src="/img/MögeTeeLogo.png" alt="" />
+      </div>
+      <div className="flex flex-col items-center gap-2 relative">
+        {loader ? (
+          <div className="w-72 p-2 flex items-center gap-2 border-2 border-mogeColor rounded-lg">
+            Phone: {number}
+          </div>
+        ) : (
+          <div className="w-72 p-1 flex items-center gap-2 border-2 border-mogeColor rounded-lg">
             <input
-              type="number"
               placeholder="Phone number"
-              disabled={loader}
               onChange={(e) => setNumber(e.target.value)}
+              className="py-1 px-3 text-lg border-none w-full"
+              // remove the border when the user presses on the input
+              onFocus={(e) => (e.target.style.outline = "none")}
             />
-            {loader ? (
-              <span className="sendicon">
-                <FiSend />
-              </span>
-            ) : (
-              <span
-                className="send"
-                onClick={() => {
+            <span
+              className="py-1 px-3 text-mogeColor cursor-pointer"
+              onClick={() => {
+                if (!number) {
+                  alert("Please enter your phone number");
+                } else {
                   setLoader(true);
                   axios.post(
                     "/api/sign",
                     { number },
                     { "content-type": "application/json" }
                   );
-                }}
-              >
-                Send
-              </span>
-            )}
+                }
+              }}
+            >
+              Send
+            </span>
           </div>
-          {loader && (
-            <div>
-              <input
-                placeholder="OTP"
-                onChange={(e) => setOTP(e.target.value)}
-              />
-              <span
-                className="send"
-                onClick={() => {
-                  axios
-                    .post(
-                      "/api/login",
-                      { number, OTP },
-                      { "content-type": "application/json" }
-                    )
-                    .then((res) => res.data === "done" && setAuth(true));
-                }}
-              >
-                Sign
-              </span>
-            </div>
-          )}
-        </div>
+        )}
+        {loader && (
+          <div className="w-72 p-1 flex items-center gap-2 border-2 border-mogeColor rounded-lg">
+            <input
+              placeholder="OTP"
+              onChange={(e) => setOTP(e.target.value)}
+              className="py-1 px-3 text-lg border-none w-full"
+              onFocus={(e) => (e.target.style.outline = "none")}
+            />
+            <span
+              className="py-1 px-3 text-mogeColor cursor-pointer"
+              onClick={() => {
+                axios
+                  .post(
+                    "/api/login",
+                    { number, OTP },
+                    { "content-type": "application/json" }
+                  )
+                  .then((res) => res.data === "done" && setAuth(true));
+              }}
+            >
+              Sign
+            </span>
+          </div>
+        )}
       </div>
-      <style jsx>{`
-        .signpage {
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-        }
-        .signContainer {
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          gap: 0.5rem;
-          position: relative;
-        }
-        .send {
-          position: absolute;
-          right: 0;
-          padding: 0.3rem 0.6rem;
-          color: #b39d25;
-          cursor: pointer;
-        }
-        .sendicon {
-          position: absolute;
-          right: 0;
-          padding: 0.3rem 0.6rem;
-          padding-top: 0.45rem;
-          color: #b39d25;
-        }
-        input {
-          width: 16rem;
-          padding: 0.2rem 0.6rem;
-          border: 2px solid #b39d25;
-          font-size: 1.2rem;
-        }
-      `}</style>
-    </>
+    </div>
   );
 }
