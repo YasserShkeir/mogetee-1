@@ -10,7 +10,7 @@ export default async (req, res) => {
   const token = cookies.jwt;
   const { update } = req.body;
   const {
-    query: { productId }
+    query: { productId },
   } = req;
 
   if (method === "PUT") {
@@ -24,7 +24,7 @@ export default async (req, res) => {
             Product.findByIdAndUpdate(
               productId,
               {
-                name: body.name
+                name: body.name,
               },
               (err) => console.log(err)
             );
@@ -33,7 +33,7 @@ export default async (req, res) => {
             Product.findByIdAndUpdate(
               productId,
               {
-                appear: !body.appear
+                appear: !body.appear,
               },
               (err) => console.log(err)
             );
@@ -42,7 +42,7 @@ export default async (req, res) => {
             Product.findByIdAndUpdate(
               productId,
               {
-                exist: !body.exist
+                exist: !body.exist,
               },
               (err) => console.log(err)
             );
@@ -51,7 +51,7 @@ export default async (req, res) => {
             Product.findByIdAndUpdate(
               productId,
               {
-                description: body.description
+                description: body.description,
               },
               (err) => console.log(err)
             );
@@ -60,7 +60,7 @@ export default async (req, res) => {
             Product.findByIdAndUpdate(
               productId,
               {
-                price: body.price
+                price: body.price,
               },
               (err) => console.log(err)
             );
@@ -69,7 +69,16 @@ export default async (req, res) => {
             Product.findByIdAndUpdate(
               productId,
               {
-                usdprice: body.usdprice
+                usdprice: body.usdprice,
+              },
+              (err) => console.log(err)
+            );
+            return res.status(200).end("done");
+          case "order":
+            Product.findByIdAndUpdate(
+              productId,
+              {
+                order: body.order,
               },
               (err) => console.log(err)
             );
