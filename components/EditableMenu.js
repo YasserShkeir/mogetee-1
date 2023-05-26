@@ -16,6 +16,13 @@ export default function Menu() {
     axios.get("/api/products").then((res) => setProducts(res.data));
   }, []);
 
+  // Create a function to refetch the data from the database
+  const refetchData = () => {
+    axios.get("/api/categories").then((res) => setCategories(res.data));
+    axios.get("/api/rate").then((res) => setRate(JSON.parse(res.data)));
+    axios.get("/api/products").then((res) => setProducts(res.data));
+  };
+
   useEffect(() => {
     const categoriesWithProducts = categories.map((category) => {
       const categoryProducts = products
@@ -105,6 +112,7 @@ export default function Menu() {
                 products={category.products}
                 rate={rate}
                 admin={true}
+                refetchData={refetchData}
               />
             </div>
           </div>
