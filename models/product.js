@@ -12,7 +12,8 @@ const productSchema = new mongoose.Schema(
     image: { type: String },
     appear: { type: Boolean, default: true },
     exist: { type: Boolean, default: true },
-    hidden: { type: Boolean, default: false }
+    hidden: { type: Boolean, default: false },
+    order: { type: Number, default: 1 },
   },
   { collection: "products" }
 );
