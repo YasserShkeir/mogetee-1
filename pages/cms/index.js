@@ -12,7 +12,6 @@ export default function Index() {
       axios
         .get("/api/auth")
         .then((res) => {
-          console.log("Here");
           res?.data === "done" && setAuth(true);
         })
         .then(() => setLoad(false)),

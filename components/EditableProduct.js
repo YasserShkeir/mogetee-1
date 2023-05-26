@@ -29,7 +29,6 @@ export default function Product({
   }, [product]);
 
   const changeOrder = (direction) => {
-    console.log("changeOrder", product);
     // The neighbor is the product that will be swapped with the current product
     let neighbour;
     const currentIndex = productOrders.findIndex(

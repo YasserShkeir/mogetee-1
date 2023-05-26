@@ -12,7 +12,6 @@ export default async (req, res) => {
   const token = cookies.jwt;
 
   if (method === "GET") {
-    // console.log(products);
     const categories = await Category.find({});
     if (!token) return res.status(200).end("noToken");
     jwt.verify(token, process.env.TOKEN_SECRET, async (err, decoded) => {
@@ -28,7 +27,7 @@ export default async (req, res) => {
                 price: product.price,
                 categoryID: category._id,
                 image: product.image,
-                hasImg: product.hasImg
+                hasImg: product.hasImg,
               });
               p.save().catch((err) => console.log(err));
             }
