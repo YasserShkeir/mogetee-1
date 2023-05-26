@@ -118,42 +118,6 @@ export default function Menu() {
           </div>
         ))}
       </div>
-      <style jsx>{`
-        .productList {
-          width: 100vw;
-          display: -webkit-box;
-          display: -ms-flexbox;
-          display: flex;
-          -webkit-box-align: center;
-          -ms-flex-align: center;
-          align-items: center;
-          -webkit-box-pack: center;
-          -ms-flex-pack: center;
-          justify-content: center;
-          -webkit-box-orient: horizontal;
-          -webkit-box-direction: normal;
-          -ms-flex-direction: row;
-          flex-direction: row;
-          -webkit-flex-wrap;
-          flex-wrap: wrap;
-          gap: 0.6rem;
-          padding: 0.6rem;
-        }
-        .title {
-          color: white;
-          font-size: 2.6rem;
-          padding: 0.8rem;
-        }
-        .title:target:before {
-          content: "";
-          display: block;
-          margin-top: 3rem;
-        }
-        .rate{
-          padding:.6rem;
-          padding-top:2rem;
-        }
-      `}</style>
     </>
   );
 }
