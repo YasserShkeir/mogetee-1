@@ -78,7 +78,7 @@ export default function Menu() {
       })();
   }, [yLocation, categoriesWithProducts]);
 
-  const phoneNumber = "+96170097533";
+  const phoneNumber = "+96181758391";
 
   const addToSelectedItems = (product, quantity) => {
     const updatedItems = selectedItems.filter(
